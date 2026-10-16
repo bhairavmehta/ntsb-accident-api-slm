@@ -1,0 +1,1063 @@
+{
+ "source": "NTSB CAROL query-builder field list",
+ "fields": [
+  {
+   "column": "Aircraft.AircraftCategory",
+   "group": "Aircraft",
+   "name": "AircraftCategory",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "AIR",
+    "BALL",
+    "BLIM",
+    "CSF",
+    "GLI",
+    "GYRO",
+    "HELI",
+    "PPAR",
+    "PLFT",
+    "RCKT",
+    "ULTR",
+    "UNK",
+    "UNMANNED",
+    "WSFT"
+   ]
+  },
+  {
+   "column": "Aircraft.EngineType",
+   "group": "Aircraft",
+   "name": "EngineType",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "ELEC",
+    "GTFN",
+    "HR",
+    "LR",
+    "NONE",
+    "REC",
+    "SR",
+    "TF",
+    "TJ",
+    "TP",
+    "TS",
+    "UNK"
+   ]
+  },
+  {
+   "column": "Aircraft.RegistrationNumber",
+   "group": "Aircraft",
+   "name": "RegistrationNumber",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Aircraft.AircraftMake",
+   "group": "Aircraft",
+   "name": "AircraftMake",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Aircraft.AircraftModel",
+   "group": "Aircraft",
+   "name": "AircraftModel",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Aircraft.AmateurBuilt",
+   "group": "Aircraft",
+   "name": "AmateurBuilt",
+   "input": "Boolean",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "true",
+    "false"
+   ]
+  },
+  {
+   "column": "Aircraft.NumberOfEngines",
+   "group": "Aircraft",
+   "name": "NumberOfEngines",
+   "input": "Text",
+   "operators": [
+    "is",
+    "is not",
+    "is greater than",
+    "is less than"
+   ],
+   "values": []
+  },
+  {
+   "column": "Aircraft.Damage",
+   "group": "Aircraft",
+   "name": "Damage",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "Destroyed",
+    "Minor",
+    "None",
+    "Substantial",
+    "Unknown"
+   ]
+  },
+  {
+   "column": "Aircraft.SerialNumber",
+   "group": "Aircraft",
+   "name": "SerialNumber",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Airport.AirportId",
+   "group": "Airport",
+   "name": "AirportId",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Airport.AirportName",
+   "group": "Airport",
+   "name": "AirportName",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "AviationOperation.RegisteredOwner",
+   "group": "AviationOperation",
+   "name": "RegisteredOwner",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "AviationOperation.OperatorName",
+   "group": "AviationOperation",
+   "name": "OperatorName",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "AviationOperation.GaFlight",
+   "group": "AviationOperation",
+   "name": "GaFlight",
+   "input": "Boolean",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "true",
+    "false"
+   ]
+  },
+  {
+   "column": "AviationOperation.RegulationFlightConductedUnder",
+   "group": "AviationOperation",
+   "name": "RegulationFlightConductedUnder",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": []
+  },
+  {
+   "column": "AviationOperation.FlightOperationType",
+   "group": "AviationOperation",
+   "name": "FlightOperationType",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": []
+  },
+  {
+   "column": "AviationOperation.FlightServiceType",
+   "group": "AviationOperation",
+   "name": "FlightServiceType",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": []
+  },
+  {
+   "column": "AviationOperation.FlightScheduledType",
+   "group": "AviationOperation",
+   "name": "FlightScheduledType",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": []
+  },
+  {
+   "column": "AviationOperation.AirMedical",
+   "group": "AviationOperation",
+   "name": "AirMedical",
+   "input": "Boolean",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "true",
+    "false"
+   ]
+  },
+  {
+   "column": "AviationOperation.RevenueSightseeing",
+   "group": "AviationOperation",
+   "name": "RevenueSightseeing",
+   "input": "Boolean",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "true",
+    "false"
+   ]
+  },
+  {
+   "column": "AviationOperation.SecondPilotPresent",
+   "group": "AviationOperation",
+   "name": "SecondPilotPresent",
+   "input": "Boolean",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "true",
+    "false"
+   ]
+  },
+  {
+   "column": "Narrative.Prelim",
+   "group": "Narrative",
+   "name": "Prelim",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Narrative.Factual",
+   "group": "Narrative",
+   "name": "Factual",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Narrative.Analysis",
+   "group": "Narrative",
+   "name": "Analysis",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "EventSequence.CICTTEventSOEGroup",
+   "group": "EventSequence",
+   "name": "CICTTEventSOEGroup",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": []
+  },
+  {
+   "column": "Weather.AccidentSiteCondition",
+   "group": "Weather",
+   "name": "AccidentSiteCondition",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "IMC",
+    "VMC"
+   ]
+  },
+  {
+   "column": "Event.NTSBNumber",
+   "group": "Event",
+   "name": "NTSBNumber",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Event.Mode",
+   "group": "Event",
+   "name": "Mode",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "Aviation",
+    "Hazmat",
+    "Highway",
+    "Marine",
+    "Pipeline",
+    "Railroad"
+   ]
+  },
+  {
+   "column": "Event.ID",
+   "group": "Event",
+   "name": "ID",
+   "input": "Int",
+   "operators": [
+    "is",
+    "is not",
+    "is greater than",
+    "is less than"
+   ],
+   "values": []
+  },
+  {
+   "column": "Event.ReportNumber",
+   "group": "Event",
+   "name": "ReportNumber",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Event.LeadAgency",
+   "group": "Event",
+   "name": "LeadAgency",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "NTSB",
+    "Other",
+    "Coast Guard"
+   ]
+  },
+  {
+   "column": "Event.OriginalPublishedDate",
+   "group": "Event",
+   "name": "OriginalPublishedDate",
+   "input": "Date",
+   "operators": [
+    "is",
+    "is not",
+    "is after",
+    "is before",
+    "is on or after",
+    "is on or before"
+   ],
+   "values": []
+  },
+  {
+   "column": "Event.EventDate",
+   "group": "Event",
+   "name": "EventDate",
+   "input": "Date",
+   "operators": [
+    "is",
+    "is not",
+    "is after",
+    "is before",
+    "is on or after",
+    "is on or before"
+   ],
+   "values": []
+  },
+  {
+   "column": "Event.City",
+   "group": "Event",
+   "name": "City",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Event.State",
+   "group": "Event",
+   "name": "State",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "AO",
+    "CA",
+    "CB",
+    "CO",
+    "CT",
+    "DE",
+    "DC",
+    "FL",
+    "GA",
+    "GM",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "OF",
+    "PO",
+    "PA",
+    "PR",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY"
+   ]
+  },
+  {
+   "column": "Event.Country",
+   "group": "Event",
+   "name": "Country",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "AF",
+    "AL",
+    "AG",
+    "AQ",
+    "AN",
+    "AO",
+    "AV",
+    "AY",
+    "AC",
+    "AR",
+    "AM",
+    "AA",
+    "AT",
+    "AS",
+    "AU",
+    "AJ",
+    "BF",
+    "BA",
+    "FQ",
+    "BG",
+    "BB",
+    "BS",
+    "BO",
+    "BE",
+    "BH",
+    "BN",
+    "BD",
+    "BT",
+    "BL",
+    "BK",
+    "BC",
+    "BV",
+    "BR",
+    "IO",
+    "VG",
+    "BX",
+    "BU",
+    "UV",
+    "BM",
+    "BY",
+    "CB",
+    "CM",
+    "CA",
+    "CV",
+    "CJ",
+    "CT",
+    "CD",
+    "CI",
+    "CH",
+    "KT",
+    "IP",
+    "CK",
+    "CO",
+    "CN",
+    "CF",
+    "CW",
+    "CR",
+    "CS",
+    "IV",
+    "HR",
+    "CU",
+    "CUW",
+    "CY",
+    "EZ",
+    "KN",
+    "DA",
+    "DJ",
+    "DO",
+    "DR",
+    "EC",
+    "EG",
+    "ES",
+    "EK",
+    "ER",
+    "EN",
+    "ET",
+    "EU",
+    "FK",
+    "FO",
+    "FM",
+    "FJ",
+    "FI",
+    "FT",
+    "FR",
+    "FG",
+    "FP",
+    "FS",
+    "GB",
+    "GA",
+    "GZ",
+    "GG",
+    "GE",
+    "GH",
+    "GI",
+    "GO",
+    "GR",
+    "GL",
+    "GJ",
+    "GP",
+    "GT",
+    "GK",
+    "GV",
+    "PU",
+    "GY",
+    "HA",
+    "HM",
+    "HO",
+    "HK",
+    "HU",
+    "IC",
+    "IN",
+    "ID",
+    "IR",
+    "IZ",
+    "EI",
+    "IM",
+    "IS",
+    "IT",
+    "IY",
+    "JM",
+    "JN",
+    "JA",
+    "JE",
+    "JO",
+    "JU",
+    "KZ",
+    "KE",
+    "KQ",
+    "KR",
+    "KU",
+    "KG",
+    "LA",
+    "LG",
+    "LE",
+    "LT",
+    "LI",
+    "LY",
+    "LS",
+    "LH",
+    "LU",
+    "MC",
+    "MK",
+    "MA",
+    "MI",
+    "MY",
+    "MV",
+    "ML",
+    "MT",
+    "MS",
+    "MB",
+    "MR",
+    "MP",
+    "MF",
+    "MX",
+    "MD",
+    "MN",
+    "MG",
+    "MW",
+    "MH",
+    "MO",
+    "MZ",
+    "WA",
+    "NR",
+    "NP",
+    "NL",
+    "NT",
+    "NC",
+    "NZ",
+    "NU",
+    "NG",
+    "NI",
+    "NE",
+    "NF",
+    "CQ",
+    "NO",
+    "MU",
+    "PK",
+    "PW",
+    "PM",
+    "PP",
+    "PF",
+    "PA",
+    "PE",
+    "RP",
+    "PC",
+    "PL",
+    "PO",
+    "QA",
+    "KS",
+    "RE",
+    "RO",
+    "RS",
+    "RW",
+    "SM",
+    "TP",
+    "SA",
+    "SG",
+    "SR",
+    "SE",
+    "SL",
+    "SN",
+    "LO",
+    "SI",
+    "BP",
+    "SO",
+    "SF",
+    "SX",
+    "SP",
+    "PG",
+    "CE",
+    "SH",
+    "SC",
+    "ST",
+    "SB",
+    "VC",
+    "SU",
+    "NS",
+    "SV",
+    "WZ",
+    "SW",
+    "SZ",
+    "SY",
+    "TW",
+    "TI",
+    "TZ",
+    "TH",
+    "TO",
+    "TL",
+    "TN",
+    "TD",
+    "TE",
+    "PS",
+    "TS",
+    "TU",
+    "TX",
+    "TK",
+    "TV",
+    "UG",
+    "UP",
+    "TC",
+    "UK",
+    "USA",
+    "UN",
+    "UY",
+    "UZ",
+    "NH",
+    "VT",
+    "VE",
+    "VM",
+    "WQ",
+    "WF",
+    "WE",
+    "WN",
+    "WI",
+    "WS",
+    "YM",
+    "CG",
+    "ZA",
+    "ZI"
+   ]
+  },
+  {
+   "column": "Event.HighestInjury",
+   "group": "Event",
+   "name": "HighestInjury",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "Fatal",
+    "Minor",
+    "None",
+    "Serious"
+   ]
+  },
+  {
+   "column": "Event.EventType",
+   "group": "Event",
+   "name": "EventType",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "ACC",
+    "INC",
+    "OCC"
+   ]
+  },
+  {
+   "column": "HasSafetyRec",
+   "group": "HasSafetyRec",
+   "name": "HasSafetyRec",
+   "input": "Boolean",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "true",
+    "false"
+   ]
+  },
+  {
+   "column": "Finding.FindingText",
+   "group": "Finding",
+   "name": "FindingText",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Case.ProbableCause",
+   "group": "Case",
+   "name": "ProbableCause",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Case.OpenClosedStatus",
+   "group": "Case",
+   "name": "OpenClosedStatus",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "true",
+    "false"
+   ]
+  },
+  {
+   "column": "Recs.Srid",
+   "group": "Recs",
+   "name": "Srid",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Recs.OpenClosed",
+   "group": "Recs",
+   "name": "OpenClosed",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "open",
+    "closed"
+   ]
+  },
+  {
+   "column": "Recs.IsReiterated",
+   "group": "Recs",
+   "name": "IsReiterated",
+   "input": "Boolean",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "true"
+   ]
+  },
+  {
+   "column": "Recs.Subject",
+   "group": "Recs",
+   "name": "Subject",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Recs.AddresseeName",
+   "group": "Recs",
+   "name": "AddresseeName",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Recs.AddresseeCategory",
+   "group": "Recs",
+   "name": "AddresseeCategory",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "7",
+    "8",
+    "9"
+   ]
+  },
+  {
+   "column": "Correspondence.Summary",
+   "group": "Correspondence",
+   "name": "Summary",
+   "input": "Text",
+   "operators": [
+    "contains",
+    "does not contain",
+    "is",
+    "is not",
+    "starts with",
+    "ends with"
+   ],
+   "values": []
+  },
+  {
+   "column": "Correspondence.CorrespondenceType",
+   "group": "Correspondence",
+   "name": "CorrespondenceType",
+   "input": "Dropdown",
+   "operators": [
+    "is",
+    "is not"
+   ],
+   "values": [
+    "Non-Recipient Correspondence",
+    "NPRM Response",
+    "Official Correspondence",
+    "Reiteration",
+    "Transmittal Letter"
+   ]
+  }
+ ]
+}

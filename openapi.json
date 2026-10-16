@@ -1,0 +1,3244 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "NTSB Aviation Accident API",
+    "description": "\nA typed REST API over the **NTSB CAROL** investigation database (data.ntsb.gov), with\nnormalized JSON, report PDFs and docket documents.\n\n* **Friendly search** \u2013 `GET /api/v1/cases?make=Boeing&airline_only=true&date_from=2020-01-01`\n* **Advanced rules** \u2013 `POST /api/v1/cases/query` with any CAROL column/operator\n* **Case detail** \u2013 narratives, probable cause, findings, aircraft, links\n* **Documents** \u2013 `/report` streams the NTSB report PDF; `/docket` lists docket files\n* **Report intelligence** \u2013 search inside a report, SLM summary and Q&A with page citations, chart data\n* **Analytics** \u2013 `/stats` aggregates, `/export` downloads CSV/JSON\n\nData comes live from NTSB's public endpoints; results are cached for a short time.\nSet `NTSB_MOCK=1` to run against built-in synthetic data (no network).\n",
+    "contact": {
+      "name": "NTSB data source",
+      "url": "https://www.ntsb.gov/Pages/CAROL.aspx"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/documents/from-case/{ntsb_number}": {
+      "post": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Load a case's report",
+        "description": "Fetches the NTSB report PDF for a case, extracts text by page, splits it into NTSB sections\nand builds a search index. Falls back to the structured case record if no PDF is published.",
+        "operationId": "load_from_case_api_v1_documents_from_case__ntsb_number__post",
+        "parameters": [
+          {
+            "name": "ntsb_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ntsb Number"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "auto",
+                "report",
+                "case"
+              ],
+              "type": "string",
+              "description": "report = NTSB PDF, case = structured record, auto = PDF then record",
+              "default": "auto",
+              "title": "Source"
+            },
+            "description": "report = NTSB PDF, case = structured record, auto = PDF then record"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/upload": {
+      "post": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Upload a PDF",
+        "description": "Analyse any PDF you already have (final report, docket factual report, CVR transcript).",
+        "operationId": "upload_api_v1_documents_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_api_v1_documents_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/from-url": {
+      "post": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Load a docket document",
+        "description": "Load a document from an ntsb.gov URL (for example a link from `/cases/{n}/docket`).",
+        "operationId": "from_url_api_v1_documents_from_url_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UrlIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{doc_id}": {
+      "get": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Document outline",
+        "operationId": "get_doc_api_v1_documents__doc_id__get",
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{doc_id}/pages/{page}": {
+      "get": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Page text",
+        "operationId": "page_text_api_v1_documents__doc_id__pages__page__get",
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Page"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{doc_id}/search": {
+      "get": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Search inside a report",
+        "operationId": "doc_search_api_v1_documents__doc_id__search_get",
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "examples": [
+                "reverse thrust"
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "k",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 30,
+              "minimum": 1,
+              "default": 8,
+              "title": "K"
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "relevant",
+                "exact"
+              ],
+              "type": "string",
+              "description": "relevant = ranked passages (BM25 + embeddings); exact = every literal match",
+              "default": "relevant",
+              "title": "Mode"
+            },
+            "description": "relevant = ranked passages (BM25 + embeddings); exact = every literal match"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{doc_id}/summary": {
+      "get": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Summarize a report",
+        "description": "Structured summary (headline, what happened, probable cause, factors, key facts, lessons)\nwith page citations. Written by the small language model when one is configured, otherwise extractive.",
+        "operationId": "summary_api_v1_documents__doc_id__summary_get",
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Refresh"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{doc_id}/ask": {
+      "post": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Ask a question about a report",
+        "description": "Retrieval-augmented answer grounded in the report, with the source passages returned.",
+        "operationId": "ask_api_v1_documents__doc_id__ask_post",
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{doc_id}/insights": {
+      "get": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Visualization data",
+        "description": "Chart-ready data: sequence-of-events timeline, findings tree, injuries, altitudes, speeds,\ncrew experience, wind, section lengths and key terms.",
+        "operationId": "insights_api_v1_documents__doc_id__insights_get",
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          },
+          {
+            "name": "model_timeline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Ask the model to build a timeline if rules find none",
+              "default": false,
+              "title": "Model Timeline"
+            },
+            "description": "Ask the model to build a timeline if rules find none"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/slm/status": {
+      "get": {
+        "tags": [
+          "Report intelligence"
+        ],
+        "summary": "Language model status",
+        "operationId": "slm_status_api_v1_slm_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Search cases",
+        "description": "Search aviation investigations with friendly filters (all AND-ed).",
+        "operationId": "search_cases_api_v1_cases_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Free text in the factual narrative",
+              "title": "Text"
+            },
+            "description": "Free text in the factual narrative"
+          },
+          {
+            "name": "probable_cause",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Text in the probable cause",
+              "title": "Probable Cause"
+            },
+            "description": "Text in the probable cause"
+          },
+          {
+            "name": "finding",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Text in an NTSB finding, e.g. 'thrust reverser'",
+              "title": "Finding"
+            },
+            "description": "Text in an NTSB finding, e.g. 'thrust reverser'"
+          },
+          {
+            "name": "ntsb_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "NTSB number contains",
+              "title": "Ntsb Number"
+            },
+            "description": "NTSB number contains"
+          },
+          {
+            "name": "make",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Aircraft make contains, e.g. Boeing",
+              "title": "Make"
+            },
+            "description": "Aircraft make contains, e.g. Boeing"
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Aircraft model contains, e.g. 737",
+              "title": "Model"
+            },
+            "description": "Aircraft model contains, e.g. 737"
+          },
+          {
+            "name": "registration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tail number contains",
+              "title": "Registration"
+            },
+            "description": "Tail number contains"
+          },
+          {
+            "name": "operator_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Operator / airline name contains",
+              "title": "Operator Name"
+            },
+            "description": "Operator / airline name contains"
+          },
+          {
+            "name": "airport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Airport ID contains, e.g. SEA",
+              "title": "Airport"
+            },
+            "description": "Airport ID contains, e.g. SEA"
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "City"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "US state code, e.g. WA",
+              "title": "State"
+            },
+            "description": "US state code, e.g. WA"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CAROL country code",
+              "title": "Country"
+            },
+            "description": "CAROL country code"
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Event date on/after (YYYY-MM-DD)",
+              "title": "Date From"
+            },
+            "description": "Event date on/after (YYYY-MM-DD)"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Event date on/before (YYYY-MM-DD)",
+              "title": "Date To"
+            },
+            "description": "Event date on/before (YYYY-MM-DD)"
+          },
+          {
+            "name": "highest_injury",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "Fatal",
+                    "Serious",
+                    "Minor",
+                    "None"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Highest Injury"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ACC",
+                    "INC",
+                    "OCC"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ACC accident, INC incident",
+              "title": "Event Type"
+            },
+            "description": "ACC accident, INC incident"
+          },
+          {
+            "name": "damage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "Destroyed",
+                    "Substantial",
+                    "Minor",
+                    "None",
+                    "Unknown"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Damage"
+            }
+          },
+          {
+            "name": "weather",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "IMC",
+                    "VMC"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Weather"
+            }
+          },
+          {
+            "name": "airline_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only 14 CFR Part 121 air-carrier operations",
+              "default": false,
+              "title": "Airline Only"
+            },
+            "description": "Only 14 CFR Part 121 air-carrier operations"
+          },
+          {
+            "name": "has_safety_rec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only cases with safety recommendations",
+              "title": "Has Safety Rec"
+            },
+            "description": "Only cases with safety recommendations"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/query": {
+      "post": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Advanced rule query",
+        "description": "Run raw CAROL rules (any column from `/api/v1/fields`), matched `all` or `any`.",
+        "operationId": "query_cases_api_v1_cases_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{ntsb_number}": {
+      "get": {
+        "tags": [
+          "Cases"
+        ],
+        "summary": "Case detail",
+        "description": "Full case: narratives, probable cause, findings, aircraft and document links.",
+        "operationId": "get_case_api_v1_cases__ntsb_number__get",
+        "parameters": [
+          {
+            "name": "ntsb_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9]{5,20}$",
+              "description": "NTSB number, e.g. DCA24MA063",
+              "title": "Ntsb Number"
+            },
+            "description": "NTSB number, e.g. DCA24MA063"
+          },
+          {
+            "name": "include_raw",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include the untouched upstream record",
+              "default": false,
+              "title": "Include Raw"
+            },
+            "description": "Include the untouched upstream record"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{ntsb_number}/report": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Report PDF",
+        "description": "Stream the newest NTSB-generated report PDF for the case.",
+        "operationId": "case_report_api_v1_cases__ntsb_number__report_get",
+        "parameters": [
+          {
+            "name": "ntsb_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9]{5,20}$",
+              "description": "NTSB number, e.g. DCA24MA063",
+              "title": "Ntsb Number"
+            },
+            "description": "NTSB number, e.g. DCA24MA063"
+          },
+          {
+            "name": "download",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Send as attachment instead of inline",
+              "default": false,
+              "title": "Download"
+            },
+            "description": "Send as attachment instead of inline"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "NTSB report PDF",
+            "content": {
+              "application/pdf": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{ntsb_number}/docket": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "Docket documents",
+        "description": "List documents in the case's public docket (factual reports, transcripts, photos).",
+        "operationId": "case_docket_api_v1_cases__ntsb_number__docket_get",
+        "parameters": [
+          {
+            "name": "ntsb_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9]{5,20}$",
+              "description": "NTSB number, e.g. DCA24MA063",
+              "title": "Ntsb Number"
+            },
+            "description": "NTSB number, e.g. DCA24MA063"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Docket"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Aggregate statistics",
+        "description": "Counts by year, make, injury, FAR part, state and top findings for the filtered set.",
+        "operationId": "stats_api_v1_stats_get",
+        "parameters": [
+          {
+            "name": "sample",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 10,
+              "description": "Max records to aggregate",
+              "default": 1000,
+              "title": "Sample"
+            },
+            "description": "Max records to aggregate"
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Free text in the factual narrative",
+              "title": "Text"
+            },
+            "description": "Free text in the factual narrative"
+          },
+          {
+            "name": "probable_cause",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Text in the probable cause",
+              "title": "Probable Cause"
+            },
+            "description": "Text in the probable cause"
+          },
+          {
+            "name": "finding",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Text in an NTSB finding, e.g. 'thrust reverser'",
+              "title": "Finding"
+            },
+            "description": "Text in an NTSB finding, e.g. 'thrust reverser'"
+          },
+          {
+            "name": "ntsb_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "NTSB number contains",
+              "title": "Ntsb Number"
+            },
+            "description": "NTSB number contains"
+          },
+          {
+            "name": "make",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Aircraft make contains, e.g. Boeing",
+              "title": "Make"
+            },
+            "description": "Aircraft make contains, e.g. Boeing"
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Aircraft model contains, e.g. 737",
+              "title": "Model"
+            },
+            "description": "Aircraft model contains, e.g. 737"
+          },
+          {
+            "name": "registration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tail number contains",
+              "title": "Registration"
+            },
+            "description": "Tail number contains"
+          },
+          {
+            "name": "operator_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Operator / airline name contains",
+              "title": "Operator Name"
+            },
+            "description": "Operator / airline name contains"
+          },
+          {
+            "name": "airport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Airport ID contains, e.g. SEA",
+              "title": "Airport"
+            },
+            "description": "Airport ID contains, e.g. SEA"
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "City"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "US state code, e.g. WA",
+              "title": "State"
+            },
+            "description": "US state code, e.g. WA"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CAROL country code",
+              "title": "Country"
+            },
+            "description": "CAROL country code"
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Event date on/after (YYYY-MM-DD)",
+              "title": "Date From"
+            },
+            "description": "Event date on/after (YYYY-MM-DD)"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Event date on/before (YYYY-MM-DD)",
+              "title": "Date To"
+            },
+            "description": "Event date on/before (YYYY-MM-DD)"
+          },
+          {
+            "name": "highest_injury",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "Fatal",
+                    "Serious",
+                    "Minor",
+                    "None"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Highest Injury"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ACC",
+                    "INC",
+                    "OCC"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ACC accident, INC incident",
+              "title": "Event Type"
+            },
+            "description": "ACC accident, INC incident"
+          },
+          {
+            "name": "damage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "Destroyed",
+                    "Substantial",
+                    "Minor",
+                    "None",
+                    "Unknown"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Damage"
+            }
+          },
+          {
+            "name": "weather",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "IMC",
+                    "VMC"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Weather"
+            }
+          },
+          {
+            "name": "airline_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only 14 CFR Part 121 air-carrier operations",
+              "default": false,
+              "title": "Airline Only"
+            },
+            "description": "Only 14 CFR Part 121 air-carrier operations"
+          },
+          {
+            "name": "has_safety_rec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only cases with safety recommendations",
+              "title": "Has Safety Rec"
+            },
+            "description": "Only cases with safety recommendations"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/export": {
+      "get": {
+        "tags": [
+          "Analytics"
+        ],
+        "summary": "Bulk export (CSV or JSON)",
+        "description": "`csv`/`json` = normalized records; `ntsb-csv` = CAROL's own summary CSV.",
+        "operationId": "export_api_v1_export_get",
+        "parameters": [
+          {
+            "name": "fmt",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "csv",
+                "json",
+                "ntsb-csv"
+              ],
+              "type": "string",
+              "default": "csv",
+              "title": "Fmt"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 5000,
+              "minimum": 1,
+              "default": 500,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "text",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Free text in the factual narrative",
+              "title": "Text"
+            },
+            "description": "Free text in the factual narrative"
+          },
+          {
+            "name": "probable_cause",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Text in the probable cause",
+              "title": "Probable Cause"
+            },
+            "description": "Text in the probable cause"
+          },
+          {
+            "name": "finding",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Text in an NTSB finding, e.g. 'thrust reverser'",
+              "title": "Finding"
+            },
+            "description": "Text in an NTSB finding, e.g. 'thrust reverser'"
+          },
+          {
+            "name": "ntsb_number",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "NTSB number contains",
+              "title": "Ntsb Number"
+            },
+            "description": "NTSB number contains"
+          },
+          {
+            "name": "make",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Aircraft make contains, e.g. Boeing",
+              "title": "Make"
+            },
+            "description": "Aircraft make contains, e.g. Boeing"
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Aircraft model contains, e.g. 737",
+              "title": "Model"
+            },
+            "description": "Aircraft model contains, e.g. 737"
+          },
+          {
+            "name": "registration",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tail number contains",
+              "title": "Registration"
+            },
+            "description": "Tail number contains"
+          },
+          {
+            "name": "operator_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Operator / airline name contains",
+              "title": "Operator Name"
+            },
+            "description": "Operator / airline name contains"
+          },
+          {
+            "name": "airport",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Airport ID contains, e.g. SEA",
+              "title": "Airport"
+            },
+            "description": "Airport ID contains, e.g. SEA"
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "City"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "US state code, e.g. WA",
+              "title": "State"
+            },
+            "description": "US state code, e.g. WA"
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CAROL country code",
+              "title": "Country"
+            },
+            "description": "CAROL country code"
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Event date on/after (YYYY-MM-DD)",
+              "title": "Date From"
+            },
+            "description": "Event date on/after (YYYY-MM-DD)"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Event date on/before (YYYY-MM-DD)",
+              "title": "Date To"
+            },
+            "description": "Event date on/before (YYYY-MM-DD)"
+          },
+          {
+            "name": "highest_injury",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "Fatal",
+                    "Serious",
+                    "Minor",
+                    "None"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Highest Injury"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ACC",
+                    "INC",
+                    "OCC"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ACC accident, INC incident",
+              "title": "Event Type"
+            },
+            "description": "ACC accident, INC incident"
+          },
+          {
+            "name": "damage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "Destroyed",
+                    "Substantial",
+                    "Minor",
+                    "None",
+                    "Unknown"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Damage"
+            }
+          },
+          {
+            "name": "weather",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "IMC",
+                    "VMC"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Weather"
+            }
+          },
+          {
+            "name": "airline_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only 14 CFR Part 121 air-carrier operations",
+              "default": false,
+              "title": "Airline Only"
+            },
+            "description": "Only 14 CFR Part 121 air-carrier operations"
+          },
+          {
+            "name": "has_safety_rec",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only cases with safety recommendations",
+              "title": "Has Safety Rec"
+            },
+            "description": "Only cases with safety recommendations"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fields": {
+      "get": {
+        "tags": [
+          "Reference"
+        ],
+        "summary": "Searchable fields",
+        "description": "Every CAROL column usable in `POST /api/v1/cases/query`, with operators and allowed values.",
+        "operationId": "fields_api_v1_fields_get",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "e.g. Aircraft, Event, Narrative",
+              "title": "Group"
+            },
+            "description": "e.g. Aircraft, Event, Narrative"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/debug/payload": {
+      "post": {
+        "tags": [
+          "Reference"
+        ],
+        "summary": "Preview the NTSB payload",
+        "description": "Shows the exact JSON this service would POST to NTSB for a rule query (no call is made).",
+        "operationId": "debug_payload_api_v1_debug_payload_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Reference"
+        ],
+        "summary": "Health check",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AskIn": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 3,
+            "title": "Question",
+            "examples": [
+              "Why did the airplane leave the runway?"
+            ]
+          },
+          "k": {
+            "type": "integer",
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "K",
+            "description": "Passages retrieved as context",
+            "default": 6
+          },
+          "stream": {
+            "type": "boolean",
+            "title": "Stream",
+            "description": "Stream newline-delimited JSON events",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "AskIn"
+      },
+      "Body_upload_api_v1_documents_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "A PDF report or docket document"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_api_v1_documents_upload_post"
+      },
+      "CaseDetail": {
+        "properties": {
+          "ntsb_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ntsb Number"
+          },
+          "mkey": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mkey",
+            "description": "Internal NTSB case key used for report PDFs"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "event_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Type"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "make": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Make"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "registration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration"
+          },
+          "operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator"
+          },
+          "far_part": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Far Part"
+          },
+          "highest_injury": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highest Injury"
+          },
+          "fatal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fatal"
+          },
+          "serious": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serious"
+          },
+          "damage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Damage"
+          },
+          "report_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Status"
+          },
+          "has_safety_rec": {
+            "title": "Has Safety Rec"
+          },
+          "links": {
+            "$ref": "#/components/schemas/Links"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "airport_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Airport Id"
+          },
+          "airport_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Airport Name"
+          },
+          "minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minor"
+          },
+          "weather": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weather"
+          },
+          "report_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Type"
+          },
+          "report_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Number"
+          },
+          "report_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Date"
+          },
+          "probable_cause": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probable Cause"
+          },
+          "narrative_prelim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narrative Prelim"
+          },
+          "narrative_factual": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narrative Factual"
+          },
+          "narrative_analysis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narrative Analysis"
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/Finding"
+            },
+            "type": "array",
+            "title": "Findings",
+            "default": []
+          },
+          "vehicles": {
+            "items": {
+              "$ref": "#/components/schemas/Vehicle"
+            },
+            "type": "array",
+            "title": "Vehicles",
+            "default": []
+          },
+          "raw": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw",
+            "description": "Untouched upstream record"
+          }
+        },
+        "type": "object",
+        "required": [
+          "links"
+        ],
+        "title": "CaseDetail"
+      },
+      "CaseSummary": {
+        "properties": {
+          "ntsb_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ntsb Number"
+          },
+          "mkey": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mkey",
+            "description": "Internal NTSB case key used for report PDFs"
+          },
+          "event_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Date"
+          },
+          "event_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Type"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
+          },
+          "make": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Make"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "registration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration"
+          },
+          "operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator"
+          },
+          "far_part": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Far Part"
+          },
+          "highest_injury": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highest Injury"
+          },
+          "fatal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fatal"
+          },
+          "serious": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serious"
+          },
+          "damage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Damage"
+          },
+          "report_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Status"
+          },
+          "has_safety_rec": {
+            "title": "Has Safety Rec"
+          },
+          "links": {
+            "$ref": "#/components/schemas/Links"
+          }
+        },
+        "type": "object",
+        "required": [
+          "links"
+        ],
+        "title": "CaseSummary"
+      },
+      "Docket": {
+        "properties": {
+          "ntsb_number": {
+            "type": "string",
+            "title": "Ntsb Number"
+          },
+          "docket_url": {
+            "type": "string",
+            "title": "Docket Url"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DocketItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ntsb_number",
+          "docket_url",
+          "count",
+          "items"
+        ],
+        "title": "Docket"
+      },
+      "DocketItem": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "file_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Type"
+          },
+          "pages": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pages"
+          },
+          "row": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Row",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "url"
+        ],
+        "title": "DocketItem"
+      },
+      "Finding": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "cause_factor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cause Factor",
+            "description": "C = cause, F = contributing factor (when provided)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "Finding"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Links": {
+        "properties": {
+          "report_pdf": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Pdf",
+            "description": "NTSB-generated report PDF"
+          },
+          "docket": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Docket",
+            "description": "Public docket page"
+          },
+          "carol_search": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carol Search"
+          }
+        },
+        "type": "object",
+        "title": "Links"
+      },
+      "Rule": {
+        "properties": {
+          "column": {
+            "type": "string",
+            "title": "Column",
+            "description": "Catalog column (see GET /api/v1/fields)",
+            "examples": [
+              "Aircraft.AircraftMake"
+            ]
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "is",
+              "is not",
+              "contains",
+              "does not contain",
+              "starts with",
+              "ends with",
+              "is greater than",
+              "is less than",
+              "is after",
+              "is before",
+              "is on or after",
+              "is on or before"
+            ],
+            "title": "Operator",
+            "default": "contains",
+            "examples": [
+              "contains"
+            ]
+          },
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "examples": [
+              "Boeing"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "column",
+          "value"
+        ],
+        "title": "Rule",
+        "description": "One low-level CAROL rule, e.g. ``Aircraft.AircraftMake contains BOEING``."
+      },
+      "RuleQuery": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/Rule"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Rules",
+            "examples": [
+              [
+                {
+                  "column": "Aircraft.AircraftMake",
+                  "operator": "contains",
+                  "value": "Boeing"
+                },
+                {
+                  "column": "Finding.FindingText",
+                  "operator": "contains",
+                  "value": "thrust reverser"
+                }
+              ]
+            ]
+          },
+          "match": {
+            "type": "string",
+            "enum": [
+              "all",
+              "any"
+            ],
+            "title": "Match",
+            "default": "all"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 25
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offset",
+            "default": 0
+          },
+          "aviation_only": {
+            "type": "boolean",
+            "title": "Aviation Only",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "rules"
+        ],
+        "title": "RuleQuery"
+      },
+      "SearchPage": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "max_result_count_reached": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Result Count Reached"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CaseSummary"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "source",
+          "items"
+        ],
+        "title": "SearchPage"
+      },
+      "UrlIn": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "An ntsb.gov document URL, e.g. a docket docBLOB link"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "UrlIn"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Vehicle": {
+        "properties": {
+          "make": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Make"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "registration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registration"
+          },
+          "category": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "damage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Damage"
+          },
+          "operator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operator"
+          },
+          "far_part": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Far Part"
+          },
+          "flight_operation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flight Operation"
+          },
+          "engines": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engines"
+          },
+          "amateur_built": {
+            "title": "Amateur Built"
+          }
+        },
+        "type": "object",
+        "title": "Vehicle"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Cases",
+      "description": "Search and retrieve NTSB aviation accident & incident investigations."
+    },
+    {
+      "name": "Documents",
+      "description": "Final/preliminary report PDFs and public docket documents."
+    },
+    {
+      "name": "Analytics",
+      "description": "Aggregations and bulk exports for analysis."
+    },
+    {
+      "name": "Report intelligence",
+      "description": "Load a report, search inside it, summarize it and ask questions with an embedded small language model, and get chart data."
+    },
+    {
+      "name": "Reference",
+      "description": "Searchable fields, operators and allowed values."
+    }
+  ]
+}
